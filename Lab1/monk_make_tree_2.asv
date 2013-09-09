@@ -1,0 +1,9 @@
+function T2 = monk_make_tree_2(T, S)
+    
+    attr = T(1);
+    K = unique(S(:, attr))';
+    
+    for i = 1:numel(K)
+    end
+    
+end

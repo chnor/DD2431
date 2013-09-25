@@ -4,48 +4,74 @@ from cvxopt.solvers import qp
 from cvxopt.base import matrix
 
 import numpy, pylab, random, math, sys
+from scipy.spatial.distance import cdist, squareform
 
-n_A = 25
+n_A = 50
 n_B = 40
 
 def linear(A, B):
 	return A.transpose() * B + 1
 def quadratic(A, B):
 	return numpy.power((A.transpose() * B + 1), 2)
-def RBF_1(A, B, sigma):
-    K = A.transpose() * B / sigma**2
-    #d = numpy.diag(K)
-    #n = len(d)
-    #K =- numpy.matrix(numpy.outer(numpy.ones(n), d)) / 2
-    #K =- numpy.matrix(numpy.outer(d, numpy.ones(n))) / 2
-    return numpy.exp(K)
-def RBF(sigma):
-	return lambda A, B: numpy.exp(-((A - B).transpose() * (A - B)) / (2*sigma**2))
+def polynomial(A, B, n):
+	return numpy.power((A.transpose() * B + 1), n)
+def RBF(A, B, sigma):
+    A = A.transpose()
+    B = B.transpose()
+    A_sq = numpy.sum(numpy.power(A, 2), axis = 1)
+    A_n = A.shape[0]
+    B_sq = numpy.sum(numpy.power(B, 2), axis = 1)
+    B_n = B.shape[0]
+    
+    D = (A_sq * numpy.matrix(numpy.ones(B_n))).transpose()
+    D += (B_sq * numpy.matrix(numpy.ones(A_n)))
+    D -= (2*B*A.transpose())
+    return numpy.exp(-D/(2*sigma**2));
 
+#K = linear
 #K = quadratic
-K = lambda A, B: RBF_1(A, B, 4)
+K = lambda A, B: RBF(A, B, 10)
+#K = lambda A, B: polynomial(A, B, 5)
 
 assert len(sys.argv) >= 2
 
 C = float(sys.argv[1])
 
-classA = [(random.normalvariate(-1.5, 1),
-           random.normalvariate(0.5,  2),
-           1.0)
-           for i in range(n_A)] + \
-         [(random.normalvariate(1.5, 1),
-           random.normalvariate(0.5, 2),
-           1.0)
-           for i in range(n_A)]
+if True:
+    classA = [(random.normalvariate(-1.5, 5),
+               random.normalvariate(0.5,  5),
+               1.0)
+               for i in range(n_A)] + \
+             [(random.normalvariate(5.0, 2),
+               random.normalvariate(0.7, 2),
+               1.0)
+               for i in range(n_A)] + \
+             [(random.normalvariate(-1.5, 2),
+               random.normalvariate(-10, 5),
+               1.0)
+               for i in range(n_A)]
 
-classB = [(random.normalvariate(-5.0, 0.5),
-           random.normalvariate(-7.0, 2.5),
-           -1.0)
-           for i in range(n_B)] + \
-         [(random.normalvariate(1.5, 2),
-           random.normalvariate(10.0, 1),
-           -1.0)
-           for i in range(n_A)]
+    classB = [(random.normalvariate(5.0, 2),
+               random.normalvariate(-10.0, 2),
+               -1.0)
+               for i in range(n_B)] + \
+             [(random.normalvariate(-1.5, 5),
+               random.normalvariate(15, 2),
+               -1.0)
+               for i in range(n_A)] + \
+             [(random.normalvariate(12, 2),
+               random.normalvariate(10, 4),
+               -1.0)
+               for i in range(n_A)]
+else:
+    classA = [(random.normalvariate(-1.5, 1),
+               random.normalvariate(0.5,  0.5),
+               1.0)
+               for i in range(n_A)]
+    classB = [(random.normalvariate(2.5, 0.5),
+               random.normalvariate(-0.5,  1),
+               -1.0)
+               for i in range(n_B)]
 
 data = classA + classB
 random.shuffle(data)
@@ -55,7 +81,9 @@ t = numpy.array([p[2] for p in data])
 
 q = -1 * numpy.ones(len(data))
 h = numpy.hstack((numpy.zeros(len(data)), C * numpy.ones(len(data))))
+#h = numpy.zeros(len(data))
 G = numpy.vstack((-1 * numpy.eye(len(data)), numpy.eye(len(data))))
+#G = -1 * numpy.eye(len(data))
 
 def Kernel(A, B, K):
 	# Because numpy is crap
@@ -74,7 +102,8 @@ alpha = numpy.array(r['x'])
 hits = numpy.nonzero(numpy.absolute(alpha) > 1e-6)[0]
 print "Support vectors are ", hits
 print "with values: ", alpha[hits].transpose()
-ind = lambda Y: ((alpha[hits].transpose() * t[hits]) * Kernel(X[:, hits], Y, K))
+ind = lambda Y: ((alpha[hits].transpose() * t[hits]) * Kernel(X[:, hits], Y, K).transpose())
+#ind = lambda Y: ((alpha[hits].transpose() * t[hits]) * Kernel(X[:, hits], Y, K))
 
 #c = ((alpha[hits].transpose() * t[hits]) * Kernel(X[:, hits], X, K)) > 0
 c = ind(X) > 0
@@ -117,13 +146,13 @@ sv_1 = (t[hits].transpose() > 0)
 sv_2 = (t[hits].transpose() < 0)
 
 pylab.hold(True)
-pylab.plot([p[0] for p in classA], [p[1] for p in classA], 'b.')
+pylab.plot([p[0] for p in classA], [p[1] for p in classA], 'b*')
 pylab.plot([p[0] for p in classB], [p[1] for p in classB], 'r.')
 pylab.plot(sv[0, sv_1], sv[1, sv_1], 'bo')
-pylab.plot(sv[0, sv_2], sv[1, sv_2], 'ro')
+pylab.plot(sv[0, sv_2], sv[1, sv_2], 'r+')
 
-xs = numpy.arange(-5, 10, 0.05)
-ys = numpy.arange(-12, 15, 0.05)
+xs = numpy.arange(numpy.min(X[0, :]) - 1, numpy.max(X[0, :]) + 1, 0.2)
+ys = numpy.arange(numpy.min(X[1, :]) - 1, numpy.max(X[1, :]) + 1, 0.2)
 xx, yy = numpy.meshgrid(xs, ys)
 grid = numpy.matrix(numpy.vstack((xx.ravel(), yy.ravel())))
 zs = numpy.reshape(ind(grid), (len(ys), len(xs)))

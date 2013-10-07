@@ -4,8 +4,8 @@ function [mu, sigma] = bayes(data)
     x = data(:, 1:end-1);
     classes = unique(labels);
     
-    mu      = zeros(numel(classes));
-    sigma   = zeros(numel(classes));
+    mu      = zeros(size(x, 2));
+    sigma   = zeros(size(x, 2));
     i = 0;
     for label = classes'
         i = i + 1;

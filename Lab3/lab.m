@@ -70,4 +70,6 @@ function lab()
     result_im = uint8(double(book) .* mask3D);
     figure;
     imagesc(result_im);
+    
+    
 end

@@ -5,7 +5,7 @@ function c = adaboost_discriminant(data, mu, sigma, p, alpha, classes, T)
     
     response = zeros(size(data));
     for t = 1:T
-        response = response + alpha(t)*discriminant(data, mu{t}, sigma{t}, p);
+        response = response + alpha(t)*discriminant(data, mu{t}, sigma{t}, p(t, :));
     end
     
     [~, i] = max(response, [], 2);

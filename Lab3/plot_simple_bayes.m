@@ -25,7 +25,8 @@ function plot_simple_bayes(data_1, data_2, mu, sigma)
     class = class - 1;
     error_test = 1.0 - sum(class == test_data(:, end)) / M
     
-    ax = [min(test_data(:, 1)) - 0.2, max(test_data(:, 1)) + 0.2, min(test_data(:, 2)) - 0.2, max(test_data(:, 2)) + 0.2];
+%     ax = [min(test_data(:, 1)) - 0.2, max(test_data(:, 1)) + 0.2, min(test_data(:, 2)) - 0.2, max(test_data(:, 2)) + 0.2];
+    ax = [0.2, 0.5, 0.2, 0.45];
     axis(ax);
     x = ax(1):0.01:ax(2);
     y = ax(3):0.01:ax(4);

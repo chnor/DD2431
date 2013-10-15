@@ -38,13 +38,13 @@ function main
     end
     [policy, value] = policy_iteration(rew, trans, 0.9);
     
-    s    = zeros(1, 40);
+    s    = zeros(1, 20);
     s(1) = 4;
     for i = 2:length(s);
         s(i) = trans(s(i-1), policy(s(i-1)));
     end
     
-%     walkshow(s, im);
-    animate(s, im);
+    walkshow(s, im);
+%     animate(s, im);
     
 end
